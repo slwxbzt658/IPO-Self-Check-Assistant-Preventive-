@@ -1,0 +1,13 @@
+# 1. 忽略所有文件和文件夹
+*
+
+# 2. 先放行当前文件夹下的目标文件（根目录直接放行即可）
+!README.md
+!.gitignore
+
+# 3. 逐层放行装有目标文件的文件夹（非常关键：缺一不可）
+!docs/
+!docs/whitepaper/
+
+# 4. 再单独放行该文件夹里的具体文件（写出相对路径）
+!docs/whitepaper/public_brief.md
