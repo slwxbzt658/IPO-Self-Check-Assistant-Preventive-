@@ -1,0 +1,81 @@
+{
+  "probe_id": "P1-L2-order_legitimacy",
+  "probe_name": "订单获取正当性与暗盘审查模型(6 维)",
+  "pillar": "支柱一·独立性",
+  "layer": "L2_增长性质与订单正当性",
+  "version": "0.1",
+
+  "legal_basis": {
+    "primary_law": "《首次公开发行股票注册管理办法》第十二条 + 反不正当竞争法",
+    "key_principle": "军工等特定行业壁垒极高,对缺乏历史沉淀却突然爆发的企业,监管默认进行有罪推定,重点排查商业贿赂与利益输送"
+  },
+
+  "dimensions": [
+    {
+      "id": "D1",
+      "name": "基础准入资质",
+      "subtitle": "门槛核查",
+      "standard": "是否具备承接军工业务的最基础合规资质(如保密资格)",
+      "risk_if_missing": "无证经营或借壳接单",
+      "rule": "若 qualifications.military_security_cert.obtained == true → Pass,否则 Fail",
+      "scoring": { "Pass": 0, "Warning": 30, "Fail": 70 }
+    },
+    {
+      "id": "D2",
+      "name": "履历与准入周期匹配度",
+      "subtitle": "光速入商核查",
+      "standard": "从零转型到打入军工核心供应链的时长是否符合常识(军工长周期认证)",
+      "risk_if_anomalous": "毫无历史业绩却突然打入巨头供应链,涉嫌裙带关系或高层输送",
+      "rule": "计算 transformation_date 到 first_major_contract_date 的月数;>= 48 → Pass;24-47 → Warning;< 24 → Fail",
+      "thresholds_months": { "pass_min": 48, "warning_min": 24 },
+      "scoring": { "Pass": 0, "Warning": 30, "Fail": 70 }
+    },
+    {
+      "id": "D3",
+      "name": "销售团队人效匹配度",
+      "subtitle": "隐形推手核查",
+      "standard": "销售人员数量及薪酬是否能匹配其巨额营收规模",
+      "risk_if_anomalous": "销售极少却业绩暴增,强烈暗示存在不在编制内的隐形获客推手",
+      "rule": "计算人均撬动收入 = revenue / sales_headcount(元/人/年);< 5,000,000 → Pass;5M-15M → Warning;>= 15,000,000 → Fail",
+      "thresholds_cny_per_person": { "pass_max": 5000000, "warning_max": 15000000 },
+      "scoring": { "Pass": 0, "Warning": 30, "Fail": 70 }
+    },
+    {
+      "id": "D4",
+      "name": "关键人员旋转门",
+      "subtitle": "董监高背景核查",
+      "standard": "董监高及核心技术人员是否直接来自该大客户负责采购/定型的关键岗位",
+      "risk_if_detected": "离职人员利益输送",
+      "rule": "若 executive_background.rotating_door_detected == true → Fail,否则 Pass",
+      "scoring": { "Pass": 0, "Warning": 30, "Fail": 70 }
+    },
+    {
+      "id": "D5",
+      "name": "获客程序完备性",
+      "subtitle": "招投标合规核查",
+      "standard": "业务获取是否严格履行了公开招投标或比选等法定程序",
+      "risk_if_missing": "直接指定供应商,涉嫌暗箱操作",
+      "rule": "若 order_acquisition_process.details_disclosed == true → Pass;== false → Warning",
+      "scoring": { "Pass": 0, "Warning": 30, "Fail": 70 }
+    },
+    {
+      "id": "D6",
+      "name": "异常费用与资金暗盘",
+      "subtitle": "利益输送终极核查",
+      "standard": "制造/管理费用中是否存在向非员工特定自然人支付的大额顾问费、服务费",
+      "risk_if_detected": "利用咨询费掩盖商业贿赂",
+      "rule": "若 manufacturing_expense_unusual_high == true AND consulting_fee_breakdown_disclosed == false → Warning",
+      "scoring": { "Pass": 0, "Warning": 30, "Fail": 70 }
+    }
+  ],
+
+  "aggregation": {
+    "description": "按 Fail/Warning 计数聚合到层级风险等级",
+    "thresholds": [
+      { "name": "重大", "condition": "fail_count >= 2 OR (fail_count >= 1 AND warning_count >= 2)", "risk_score": 90 },
+      { "name": "高",   "condition": "fail_count >= 1", "risk_score": 70 },
+      { "name": "中",   "condition": "warning_count >= 1", "risk_score": 40 },
+      { "name": "低",   "condition": "default", "risk_score": 10 }
+    ]
+  }
+}

@@ -1,0 +1,16 @@
+# HawkEye v5 - 依赖清单
+
+# PDF 解析(L1 客户集中度抽取链路)
+pymupdf>=1.24.0
+
+# LLM 解释层(DeepSeek, OpenAI 兼容接口)
+openai>=1.0.0
+python-dotenv>=1.0.0
+
+# Web 界面
+gradio>=4.0.0
+
+# 后续阶段会逐步加入:
+#   - pdfplumber                 (复杂表格兜底)
+#   - pydantic                   (结构化输出校验)
+#   - langgraph                  (多 Agent 流程)

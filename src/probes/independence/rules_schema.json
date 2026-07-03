@@ -1,0 +1,59 @@
+{
+  "probe_id": "P1-L1-customer_concentration",
+  "probe_name": "客户集中度穿透探针",
+  "pillar": "支柱一·独立性",
+  "layer": "L1_表象数据预警",
+  "version": "0.1",
+
+  "legal_basis": {
+    "primary_law": "《首次公开发行股票注册管理办法》第十二条",
+    "key_requirement": "发行人必须具备独立持续经营能力,严禁严重依赖导致丧失独立性",
+    "industry_note": "军工航空领域监管不绝对否决高集中度,但当单一客户占比超 50% 甚至 70% 时强制触发深穿透审查"
+  },
+
+  "threshold_rules": [
+    {
+      "name": "重大风险",
+      "threshold_inclusive": 0.70,
+      "risk_score": 90,
+      "risk_level": "重大",
+      "verdict": "触发表象红线·启动深穿透引信"
+    },
+    {
+      "name": "高风险",
+      "threshold_inclusive": 0.50,
+      "risk_score": 70,
+      "risk_level": "高",
+      "verdict": "强制触发跨支柱穿透审查"
+    },
+    {
+      "name": "中风险",
+      "threshold_inclusive": 0.30,
+      "risk_score": 40,
+      "risk_level": "中",
+      "verdict": "建议关注,留待 L2 复核"
+    },
+    {
+      "name": "低风险",
+      "threshold_inclusive": 0.0,
+      "risk_score": 10,
+      "risk_level": "低",
+      "verdict": "可接受"
+    }
+  ],
+
+  "trend_amplification": {
+    "description": "若客户集中度连续逐年上升,在基础分数上额外加分",
+    "bonus_score": 10
+  },
+
+  "cross_layer_dispatch": {
+    "description": "当风险等级达到 高/重大 时,触发对 L2 和 L3 的强制深穿透指令",
+    "triggered_when_risk_level_in": ["高", "重大"],
+    "actions": [
+      "向L2发射:启动【订单获取正当性与暗盘审查模型】(6维)",
+      "向L2发射:API Call -> 支柱二·维度A(技术不可替代性与转换成本模型)",
+      "向L3发射:API Call -> 支柱三·维度B/C(价值创造与业务稳定性模型)"
+    ]
+  }
+}

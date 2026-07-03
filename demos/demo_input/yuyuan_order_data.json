@@ -1,0 +1,42 @@
+{
+  "company_name": "成都裕鸢航空智能制造股份有限公司",
+
+  "company_history": {
+    "transformation_date": "2017-03",
+    "first_major_contract_date": "2018-08",
+    "first_major_customer": "中航工业 A01 单位",
+    "note": "2017 年 3 月才突击转型航空加工,2018 年 8 月即打入 A01 核心供应链"
+  },
+
+  "qualifications": {
+    "military_security_cert": {
+      "obtained": true,
+      "level": "武器装备科研生产单位三级保密资格",
+      "date": "2017-08"
+    }
+  },
+
+  "sales_efficiency": {
+    "year": 2019,
+    "sales_headcount": 4,
+    "revenue_supported_cny": 100000000,
+    "note": "报告期初月均销售人员仅 4 人,撬动过亿军工订单"
+  },
+
+  "executive_background": {
+    "rotating_door_detected": false,
+    "note": "实控人周继德、刘勇涛早期曾就职于沈阳黎明,但未直接在 A01 关键岗位任职,无明显直接的离职输送表象"
+  },
+
+  "order_acquisition_process": {
+    "self_described_method": "招投标、比选、商务谈判",
+    "details_disclosed": false,
+    "note": "对早期如何认识客户缺乏细节支撑"
+  },
+
+  "expense_anomalies": {
+    "manufacturing_expense_unusual_high": true,
+    "consulting_fee_breakdown_disclosed": false,
+    "note": "V1.0 招股书财务报表中列示了较高的制造费用,结合销售人员极少的异常,高度疑似隐藏外部顾问费"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "company_name": "成都裕鸢航空智能制造股份有限公司",
+  "stock_board": "创业板",
+  "audit_result": "2023-04-13 终止审核(未通过)",
+  "report_period": ["2020", "2021", "2022H1"],
+  "top1_customer": {
+    "name": "中航工业 A01 单位",
+    "yearly_ratios": [0.5971, 0.6825, 0.7043]
+  },
+  "evidence_source": {
+    "document": "招股书 V1.0",
+    "page": 141,
+    "section": "重大事项提示"
+  },
+  "note": "本数据为人工录入,用于 P1-L1 探针的 MVP 演示。后续会替换为 PDF 自动抽取结果。"
+}
