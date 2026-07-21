@@ -23,6 +23,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.probes.independence.probe_customer_concentration import ConcentrationInput  # noqa: E402
 from src.probes.independence.probe_order_legitimacy import OrderLegitimacyInput  # noqa: E402
+from src.probes.independence.probe_commercial_status import CommercialStatusInput  # noqa: E402
 from src.probes.independence.orchestrator import run_pillar1, verdict_to_dict  # noqa: E402
 
 
@@ -51,6 +52,19 @@ def load_order_input() -> OrderLegitimacyInput:
         executive_background=raw["executive_background"],
         order_acquisition_process=raw["order_acquisition_process"],
         expense_anomalies=raw["expense_anomalies"],
+    )
+
+
+def load_commercial_input() -> CommercialStatusInput:
+    path = Path(__file__).parent / "demo_input" / "yuyuan_commercial_status_data.json"
+    with open(path, "r", encoding="utf-8") as f:
+        raw = json.load(f)
+    return CommercialStatusInput(
+        company_name=raw["company_name"],
+        pricing_power=raw["pricing_power"],
+        contract_status=raw["contract_status"],
+        cost_passthrough=raw["cost_passthrough"],
+        evidence_source=raw.get("evidence_source", {}),
     )
 
 
@@ -93,6 +107,23 @@ def pretty_print_verdict(v: dict) -> None:
     else:
         print("\n  L2 未触发(L1 未达高/重大,无需深穿透)")
 
+    if v.get("l3_result"):
+        print_section_header("L3  商业地位与议价权定性")
+        l3 = v["l3_result"]
+        print(f"  Pass={l3['pass_count']}  Warning={l3['warning_count']}  Fail={l3['fail_count']}")
+        print(f"  风险等级: {l3['risk_level']}({l3['risk_score']}分)")
+        print(f"  层级定性: {l3['qualitative_verdict']}")
+        print(f"\n  各维度详情:")
+        for d in l3["dimensions"]:
+            tag = {"Pass": "[ OK ]", "Warning": "[WARN]", "Fail": "[FAIL]"}[d["verdict"]]
+            print(f"    {tag} {d['dimension_id']} {d['dimension_name']} — {d['verdict_label']}")
+            print(f"           事实: {d['fact_summary']}")
+            print(f"           解释: {d['explanation']}")
+        if l3.get("profit_stress_recommended"):
+            print(f"\n  跨支柱建议: {l3['profit_stress_reason']}")
+    else:
+        print("\n  L3 未触发")
+
     if v["cross_pillar_calls"]:
         print_section_header("跨支柱 API 调用结果(Stub)")
         for api_name, result in v["cross_pillar_calls"].items():
@@ -114,8 +145,9 @@ def pretty_print_verdict(v: dict) -> None:
 def main() -> None:
     customer_input = load_customer_input()
     order_input = load_order_input()
+    commercial_input = load_commercial_input()
 
-    verdict = run_pillar1(customer_input, order_input, prospectus_data=None)
+    verdict = run_pillar1(customer_input, order_input, commercial_input, prospectus_data=None)
     verdict_dict = verdict_to_dict(verdict)
 
     output_dir = Path(__file__).parent / "demo_output"

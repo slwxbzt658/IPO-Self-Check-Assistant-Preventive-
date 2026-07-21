@@ -93,6 +93,39 @@ def _format_l2_result(result) -> str:
     return "\n".join(lines)
 
 
+def _format_l3_result(result) -> str:
+    if result.verdict_dict is None:
+        return ""
+    l3 = result.verdict_dict.get("l3_result")
+    if l3 is None:
+        return "L3 未触发（L1 风险等级未达高/重大，或未提供商业地位数据）"
+    risk = l3.get("risk_level", "未知")
+    icon = RISK_COLOR.get(risk, "⚪")
+    lines = [
+        f"**风险等级**：{icon} {risk}（{l3.get('risk_score', 0)}/100）",
+        f"**统计**：Pass={l3.get('pass_count', 0)}  "
+        f"Warning={l3.get('warning_count', 0)}  "
+        f"Fail={l3.get('fail_count', 0)}",
+        "",
+        f"**层级定性**：{l3.get('qualitative_verdict', '')}",
+        "",
+        "**各维度详情**：",
+    ]
+    verdict_icon = {"Pass": "✅", "Warning": "⚠️", "Fail": "❌"}
+    for d in l3.get("dimensions", []):
+        icon_d = verdict_icon.get(d.get("verdict", ""), "❓")
+        lines.append(
+            f"{icon_d} **{d.get('dimension_id')} {d.get('dimension_name')}**"
+            f" — {d.get('verdict_label', '')}"
+        )
+        lines.append(f"　事实：{d.get('fact_summary', '')}")
+        lines.append(f"　解释：{d.get('explanation', '')}")
+    if l3.get("profit_stress_recommended"):
+        lines.append("")
+        lines.append(f"**跨支柱建议**：{l3.get('profit_stress_reason', '')}")
+    return "\n".join(lines)
+
+
 def _format_final_verdict(result) -> str:
     if result.verdict_dict is None:
         return ""
@@ -117,10 +150,10 @@ def _format_final_verdict(result) -> str:
 def analyze(pdf_file, company_name: str, api_key: str) -> tuple:
     """
     Gradio 回调函数。
-    返回：(抽取信息, L1结果, L2结果, 综合判决, LLM报告, 状态)
+    返回：(抽取信息, L1结果, L2结果, L3结果, 综合判决, LLM报告, 状态)
     """
     if pdf_file is None:
-        return "", "", "", "", "", "⚠️ 请先上传招股书 PDF"
+        return "", "", "", "", "", "", "⚠️ 请先上传招股书 PDF"
 
     name = company_name.strip() or "待分析企业"
     key = api_key.strip() or None
@@ -136,11 +169,12 @@ def analyze(pdf_file, company_name: str, api_key: str) -> tuple:
             enable_llm=bool(key or os.environ.get("DEEPSEEK_API_KEY")),
         )
     except Exception as exc:
-        return "", "", "", "", "", f"❌ 运行出错：{exc}"
+        return "", "", "", "", "", "", f"❌ 运行出错：{exc}"
 
     if not result.success and result.verdict_dict is None:
         return (
             _format_extraction_info(result),
+            "",
             "",
             "",
             "",
@@ -151,6 +185,7 @@ def analyze(pdf_file, company_name: str, api_key: str) -> tuple:
     extraction_info = _format_extraction_info(result)
     l1_text = _format_l1_result(result)
     l2_text = _format_l2_result(result)
+    l3_text = _format_l3_result(result)
     verdict_text = _format_final_verdict(result)
 
     llm_text = ""
@@ -164,7 +199,7 @@ def analyze(pdf_file, company_name: str, api_key: str) -> tuple:
     if not result.explanation or not result.explanation.success:
         status += "（未启用 LLM 解释层，请填写 API Key）"
 
-    return extraction_info, l1_text, l2_text, verdict_text, llm_text, status
+    return extraction_info, l1_text, l2_text, l3_text, verdict_text, llm_text, status
 
 
 # ── Gradio 界面定义 ──────────────────────────────────────────
@@ -182,7 +217,7 @@ with gr.Blocks(
         上传招股书 PDF，系统自动提取客户集中度等关键指标，
         经多层探针判定后，生成带证据溯源的风险诊断报告。
 
-        > 当前版本：支柱一 L1+L2 探针已实现，支柱二/三使用 Stub。
+        > 当前版本：支柱一 L1+L2+L3 探针已实现，支柱二/三远程模型使用 Stub。
         """
     )
 
@@ -211,6 +246,8 @@ with gr.Blocks(
                 l1_output = gr.Markdown(label="L1 探针结果")
             with gr.Tab("🔍 L2 订单正当性"):
                 l2_output = gr.Markdown(label="L2 探针结果")
+            with gr.Tab("💼 L3 商业地位"):
+                l3_output = gr.Markdown(label="L3 探针结果")
             with gr.Tab("⚖️ 综合判决"):
                 verdict_output = gr.Markdown(label="综合判决")
             with gr.Tab("📝 LLM 诊断报告"):
@@ -223,6 +260,7 @@ with gr.Blocks(
             extraction_output,
             l1_output,
             l2_output,
+            l3_output,
             verdict_output,
             llm_output,
             status_box,

@@ -24,6 +24,11 @@ from src.probes.independence.probe_order_legitimacy import (
     OrderLegitimacyResult,
     evaluate_order_legitimacy,
 )
+from src.probes.independence.probe_commercial_status import (
+    CommercialStatusInput,
+    CommercialStatusResult,
+    evaluate_commercial_status,
+)
 from src.probes.innovation.stub_tech_replaceability import assess_tech_replaceability
 from src.probes.growth.stub_value_and_stability import assess_value_source_and_stability
 
@@ -41,6 +46,7 @@ class Pillar1FinalVerdict:
     final_verdict_text: str
     l1_result: dict
     l2_result: Optional[dict]
+    l3_result: Optional[dict]
     cross_pillar_calls: dict = field(default_factory=dict)
     synthesis_reasoning: str = ""
     cross_zone_signals: dict = field(default_factory=dict)
@@ -57,6 +63,7 @@ def _max_risk_level(levels: list[str]) -> str:
 def _synthesize_verdict_text(
     l1: L1Result,
     l2: Optional[OrderLegitimacyResult],
+    l3: Optional[CommercialStatusResult],
     tech_result: Optional[dict],
     value_result: Optional[dict],
 ) -> str:
@@ -78,6 +85,12 @@ def _synthesize_verdict_text(
             f"支柱二回传:技术可替代性={tech_result['replaceability_level']},"
             f"定性={tech_result['verdict_for_pillar1']}"
         )
+    if l3 is not None:
+        parts.append(
+            f"L3【商业地位与议价权】统计 Pass={l3.pass_count}/"
+            f"Warning={l3.warning_count}/Fail={l3.fail_count},判定为【{l3.risk_level}】"
+        )
+        parts.append(f"L3定性:{l3.qualitative_verdict}")
     if value_result is not None:
         parts.append(
             f"支柱三回传:价值来源={value_result['value_source']},"
@@ -91,6 +104,7 @@ def _synthesize_verdict_text(
 def run_pillar1(
     customer_input: ConcentrationInput,
     order_input: OrderLegitimacyInput,
+    commercial_input: Optional[CommercialStatusInput] = None,
     prospectus_data: Optional[dict] = None,
 ) -> Pillar1FinalVerdict:
     """
@@ -100,6 +114,7 @@ def run_pillar1(
     l1 = evaluate_concentration(customer_input)
 
     l2: Optional[OrderLegitimacyResult] = None
+    l3: Optional[CommercialStatusResult] = None
     tech_result: Optional[dict] = None
     value_result: Optional[dict] = None
     cross_zone_signals: dict = {}
@@ -108,6 +123,8 @@ def run_pillar1(
 
     if deep_dive_triggered:
         l2 = evaluate_order_legitimacy(order_input)
+        if commercial_input is not None:
+            l3 = evaluate_commercial_status(commercial_input)
         tech_result = assess_tech_replaceability(prospectus_data)
         value_result = assess_value_source_and_stability(prospectus_data)
 
@@ -119,6 +136,8 @@ def run_pillar1(
     candidate_levels = [l1.risk_level]
     if l2 is not None:
         candidate_levels.append(l2.risk_level)
+    if l3 is not None:
+        candidate_levels.append(l3.risk_level)
     if tech_result is not None and tech_result["replaceability_level"] == "HIGH":
         candidate_levels.append("高")
     if value_result is not None and value_result["stability_score"] < 40:
@@ -129,6 +148,7 @@ def run_pillar1(
     base_score = max(
         l1.risk_score,
         l2.risk_score if l2 is not None else 0,
+        l3.risk_score if l3 is not None else 0,
     )
     cross_pillar_bonus = 0
     if tech_result is not None and tech_result["verdict_for_pillar1"] == "恶性寄生":
@@ -137,22 +157,33 @@ def run_pillar1(
         cross_pillar_bonus += 5
     final_score = min(100, base_score + cross_pillar_bonus)
 
-    verdict_text = _synthesize_verdict_text(l1, l2, tech_result, value_result)
+    verdict_text = _synthesize_verdict_text(l1, l2, l3, tech_result, value_result)
 
     cross_pillar_calls = {}
     if tech_result is not None:
         cross_pillar_calls["pillar2.assess_tech_replaceability"] = tech_result
     if value_result is not None:
         cross_pillar_calls["pillar3.assess_value_source_and_stability"] = value_result
+    if l3 is not None and l3.profit_stress_recommended:
+        cross_pillar_calls["pillar3.assess_profit_stress"] = {
+            "status": "recommended",
+            "reason": l3.profit_stress_reason,
+            "_meta": {
+                "is_stub": True,
+                "implemented_in": "04c_pillar3_growth.md（待建）",
+            },
+        }
 
     reasoning = (
         f"判决合成: L1={l1.risk_level}({l1.risk_score}) + "
         f"L2={l2.risk_level if l2 else '未触发'}({l2.risk_score if l2 else 0}) + "
+        f"L3={l3.risk_level if l3 else '未触发'}({l3.risk_score if l3 else 0}) + "
         f"跨支柱加成 +{cross_pillar_bonus} → 最终【{final_level}】({final_score})"
     )
 
     from src.probes.independence.probe_customer_concentration import result_to_dict as l1_to_dict
     from src.probes.independence.probe_order_legitimacy import result_to_dict as l2_to_dict
+    from src.probes.independence.probe_commercial_status import result_to_dict as l3_to_dict
 
     return Pillar1FinalVerdict(
         pillar="支柱一·独立性",
@@ -162,6 +193,7 @@ def run_pillar1(
         final_verdict_text=verdict_text,
         l1_result=l1_to_dict(l1),
         l2_result=l2_to_dict(l2) if l2 is not None else None,
+        l3_result=l3_to_dict(l3) if l3 is not None else None,
         cross_pillar_calls=cross_pillar_calls,
         synthesis_reasoning=reasoning,
         cross_zone_signals=cross_zone_signals,

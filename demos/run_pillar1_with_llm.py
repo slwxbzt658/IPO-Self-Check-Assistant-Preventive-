@@ -23,6 +23,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.probes.independence.probe_customer_concentration import ConcentrationInput  # noqa: E402
 from src.probes.independence.probe_order_legitimacy import OrderLegitimacyInput  # noqa: E402
+from src.probes.independence.probe_commercial_status import CommercialStatusInput  # noqa: E402
 from src.probes.independence.orchestrator import run_pillar1, verdict_to_dict  # noqa: E402
 from src.report.llm_explainer import generate_explanation  # noqa: E402
 
@@ -55,6 +56,19 @@ def load_order_input() -> OrderLegitimacyInput:
     )
 
 
+def load_commercial_input() -> CommercialStatusInput:
+    path = Path(__file__).parent / "demo_input" / "yuyuan_commercial_status_data.json"
+    with open(path, "r", encoding="utf-8") as f:
+        raw = json.load(f)
+    return CommercialStatusInput(
+        company_name=raw["company_name"],
+        pricing_power=raw["pricing_power"],
+        contract_status=raw["contract_status"],
+        cost_passthrough=raw["cost_passthrough"],
+        evidence_source=raw.get("evidence_source", {}),
+    )
+
+
 def main() -> None:
     print("\n" + "=" * 64)
     print("  HawkEye  |  支柱一完整链路 + LLM 解释层")
@@ -62,7 +76,8 @@ def main() -> None:
 
     customer_input = load_customer_input()
     order_input = load_order_input()
-    verdict = run_pillar1(customer_input, order_input, prospectus_data=None)
+    commercial_input = load_commercial_input()
+    verdict = run_pillar1(customer_input, order_input, commercial_input, prospectus_data=None)
     verdict_dict = verdict_to_dict(verdict)
 
     print(f"\n  结构化判决已完成")

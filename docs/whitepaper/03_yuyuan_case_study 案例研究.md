@@ -37,8 +37,6 @@
 
 ## 四色笔记输出示例
 
-> 📌 图片需从本地迁移至 `docs/whitepaper/images/screenshots/` 后路径才能在 GitHub 上正常显示。
-
 **L1：客户集中度**
 
 <img src="images/screenshots/yuyuan_L1_customer_concentration.png" alt="L1客户集中度探针输出" style="zoom: 67%;" />
@@ -47,9 +45,13 @@
 
 <img src="images/screenshots/yuyuan_L2_order_legitimacy.png" alt="L2订单正当性6维审查输出" style="zoom:67%;" />
 
-**L3：综合判决**
+**L3:商业地位**
 
-<img src="images/screenshots/yuyuan_L3_verdict.png" alt="L3综合判决输出" style="zoom:67%;" />
+![](D:\AI_Projects\hawkeye-ipo-v5\docs\whitepaper\images\screenshots\yuyuan_L3_commercial_status.png)
+
+**L4：综合判决**
+
+![](D:\AI_Projects\hawkeye-ipo-v5\docs\whitepaper\images\screenshots\yuyuan_L4_verdict.png)
 
 **LLM 自然语言诊断报告**
 

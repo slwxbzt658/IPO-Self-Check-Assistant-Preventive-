@@ -150,7 +150,7 @@ hawkeye-ipo-v5/
 
 ## 界面截图
 
-![HawkEye Demo](docs/whitepaper/images/gradio_demo_v0.1.png)
+![](D:\AI_Projects\hawkeye-ipo-v5\docs\whitepaper\images\screenshots\yuyuan_llm_report.png)
 
 ------
 

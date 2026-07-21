@@ -25,6 +25,9 @@ from src.probes.independence.probe_order_legitimacy import (
     OrderLegitimacyInput,
     evaluate_order_legitimacy,
 )
+from src.probes.independence.probe_commercial_status import (
+    CommercialStatusInput,
+)
 from src.probes.independence.orchestrator import (
     Pillar1FinalVerdict,
     run_pillar1,
@@ -87,6 +90,38 @@ def _build_order_input(company_name: str) -> OrderLegitimacyInput:
     )
 
 
+def _build_commercial_status_input(company_name: str) -> CommercialStatusInput:
+    """L3 探针输入目前是手工录入的裕鸢数据。"""
+    return CommercialStatusInput(
+        company_name=company_name,
+        pricing_power={
+            "provisional_price_ratio_pct": 59.22,
+            "year": 2020,
+            "uses_price_reduction_strategy": True,
+            "three_vendor_bidding_since_year": 2021,
+            "core_customer": "中航工业 A01 单位",
+            "note": "2020 年暂定价合同占比 59.22%; 存在主动降价与三方竞价压力",
+        },
+        contract_status={
+            "deliver_before_contract_ratio_pct": 41.37,
+            "year": 2020,
+            "note": "2020 年先发货后签合同占比 41.37%",
+        },
+        cost_passthrough={
+            "product_name": "机体结构件",
+            "margin_from_pct": 52,
+            "margin_to_pct": 45,
+            "forced_by_customer": "中航工业 A01 单位",
+            "below_cost_stoppage": True,
+            "note": "核心产品毛利率由 52% 降至 45%, 存在低于成本被迫停工",
+        },
+        evidence_source={
+            "document": "招股书 V1.0（手工录入）",
+            "sections": ["重大事项提示", "业务模式", "毛利率分析"],
+        },
+    )
+
+
 def run_full_analysis(
     pdf_path: str | Path,
     *,
@@ -130,11 +165,12 @@ def run_full_analysis(
         },
     )
 
-    # ── Step 3: L2 探针（暂用固定数据）─────────────────────
+    # ── Step 3: L2 / L3 探针（暂用固定数据）─────────────────
     l2_input = _build_order_input(company_name)
+    l3_input = _build_commercial_status_input(company_name)
 
     # ── Step 4: 编排器综合判决 ───────────────────────────────
-    verdict = run_pillar1(l1_input, l2_input, prospectus_data=None)
+    verdict = run_pillar1(l1_input, l2_input, l3_input, prospectus_data=None)
     result.verdict = verdict
     result.verdict_dict = verdict_to_dict(verdict)
 
